@@ -136,8 +136,60 @@ async function fetchGitHubProjects() {
         }
 
     } catch (error) {
-        console.error("Error loading GitHub projects:", error);
-        container.innerHTML = `<p class="text-center w-100" style="color: red;">Unable to load projects from GitHub: ${error.message}</p>`;
+        console.warn("GitHub API rate limit exceeded or fetch failed. Loading fallback projects.", error);
+        
+        // Graceful static fallback
+        const fallbackRepos = [
+            {
+                name: "rambabu-portfolio",
+                description: "Personal portfolio website built with HTML, CSS, JS, and 3D animations.",
+                language: "HTML",
+                html_url: "https://github.com/ram12321276/rambabu-portfolio"
+            },
+            {
+                name: "student-performance-system",
+                description: "C/C++ architecture to manage student records, attendance, and marks.",
+                language: "C++",
+                html_url: "https://github.com/ram12321276"
+            },
+            {
+                name: "mobile-usage-analysis",
+                description: "Python data pipeline processing records via Pandas/NumPy.",
+                language: "Python",
+                html_url: "https://github.com/ram12321276"
+            }
+        ];
+
+        container.innerHTML = '';
+        fallbackRepos.forEach((repo, index) => {
+            const delay = index * 100;
+            const cardHTML = `
+                <div class="bento-card" data-reveal="up" data-reveal-delay="${delay}" data-tilt>
+                    <i class="fab fa-github card-icon"></i>
+                    <h3>${repo.name.replace(/-/g, ' ')}</h3>
+                    <p class="mb-2" style="font-size: 0.9rem;">${repo.description}</p>
+                    <div style="margin-top: auto; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.8rem; color:var(--accent-emerald); font-weight:600;"><i class="fas fa-circle" style="font-size:0.6rem; margin-right:4px;"></i>${repo.language}</span>
+                        <a href="${repo.html_url}" target="_blank" class="card-link" style="color:var(--text-secondary);">Repo <i class="fas fa-arrow-right" style="font-size:0.8em; margin-left:4px;"></i></a>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHTML);
+        });
+
+        // Re-init observer and tilt for the fallback cards
+        const newElements = container.querySelectorAll('[data-reveal]');
+        newElements.forEach(el => {
+            el.style.transitionDelay = `${el.getAttribute('data-reveal-delay')}ms`;
+            if (typeof revealObserver !== 'undefined') revealObserver.observe(el);
+            setTimeout(() => el.classList.add('revealed'), 100);
+        });
+        
+        if (typeof VanillaTilt !== 'undefined') {
+            VanillaTilt.init(container.querySelectorAll("[data-tilt]"), {
+                max: 5, speed: 400, glare: true, "max-glare": 0.2,
+            });
+        }
     }
 }
 
